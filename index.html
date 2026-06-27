@@ -3,26 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swiggy Company Analysis | Avishkar Patil</title>
+    <title>Swiggy Equity Analysis Dashboard</title>
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
                     colors: {
-                        swiggy: {
-                            orange: '#FC8019',
-                            dark: '#171a21',
-                            card: '#222631',
-                            border: '#333947'
-                        }
+                        brand: { orange: '#FC8019', dark: '#0a0c10', surface: '#161923', border: '#2a2f3e' }
                     }
                 }
             }
@@ -31,432 +30,437 @@
 
     <style>
         body {
-            background-color: #0f1115;
+            background-color: #0a0c10;
             color: #e2e8f0;
             overflow-x: hidden;
         }
 
-        /* Smooth UI Transitions & Glassmorphism */
+        /* Glassmorphism & Smooth Hover Transitions */
         .glass-card {
-            background: rgba(34, 38, 49, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(252, 128, 25, 0.1);
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(22, 25, 35, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .glass-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px -5px rgba(252, 128, 25, 0.15), 0 8px 10px -6px rgba(252, 128, 25, 0.1);
-            border-color: rgba(252, 128, 25, 0.3);
+            transform: translateY(-5px) scale(1.01);
+            background: rgba(26, 30, 42, 0.8);
+            border-color: rgba(252, 128, 25, 0.25);
+            box-shadow: 0 15px 35px -10px rgba(252, 128, 25, 0.15), 0 5px 15px -5px rgba(0, 0, 0, 0.5);
         }
 
-        /* Tab Switching Animations */
+        /* Smooth Tab Animations */
         .tab-content {
             display: none;
             opacity: 0;
-            transform: translateY(15px);
+            transform: translateY(20px);
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
 
         .tab-content.active {
             display: block;
-            animation: fadeSlideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            animation: slideFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        @keyframes fadeSlideIn {
-            from { opacity: 0; transform: translateY(15px); }
+        @keyframes slideFadeUp {
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Sidebar Navigation Hover */
+        /* Nav Button Animations */
         .nav-btn {
-            transition: all 0.3s ease;
             position: relative;
+            transition: all 0.4s ease;
             overflow: hidden;
-        }
-        
-        .nav-btn::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 3px;
-            background-color: #FC8019;
-            transform: scaleY(0);
-            transition: transform 0.3s ease;
-        }
-
-        .nav-btn:hover::before, .nav-btn.active::before {
-            transform: scaleY(1);
+            border-left: 3px solid transparent;
         }
 
         .nav-btn.active {
             background: linear-gradient(90deg, rgba(252,128,25,0.15) 0%, rgba(252,128,25,0) 100%);
+            border-left: 3px solid #FC8019;
             color: #FC8019;
-            font-weight: 600;
+            font-weight: 700;
+        }
+
+        .nav-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.03);
+            border-left: 3px solid rgba(252,128,25,0.5);
         }
 
         /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #0f1115; }
-        ::-webkit-scrollbar-thumb { background: #333947; border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: #0a0c10; }
+        ::-webkit-scrollbar-thumb { background: #2a2f3e; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #FC8019; }
-
-        .chart-container { position: relative; height: 300px; width: 100%; }
+        
+        .chart-container { position: relative; height: 280px; width: 100%; }
+        .chart-container-sm { position: relative; height: 220px; width: 100%; }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
 
-    <aside class="w-72 bg-swiggy-dark border-r border-swiggy-border flex flex-col z-20 shadow-2xl relative">
-        <div class="p-6 border-b border-swiggy-border">
-            <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-swiggy-orange flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-orange-500/30">
+    <!-- Sidebar Layout -->
+    <aside class="w-72 bg-brand-dark/90 border-r border-brand-border flex flex-col z-20 backdrop-blur-md relative shrink-0">
+        <div class="p-6">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-brand-orange flex items-center justify-center text-white font-black text-2xl shadow-lg shadow-orange-500/20">
                     S
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold text-white tracking-tight">Swiggy Analysis</h1>
-                    <p class="text-[10px] text-gray-400 font-mono tracking-wider">MMS FINANCE | JUNE 6, 2026</p>
+                    <h1 class="text-xl font-bold text-white tracking-tight">Swiggy Ltd.</h1>
+                    <p class="text-xs text-gray-400 font-medium tracking-wide">NSE: SWIGGY</p>
                 </div>
             </div>
-            <div class="mt-4 p-3 bg-swiggy-card rounded-lg border border-swiggy-border/50 text-xs text-gray-300">
-                <span class="block text-gray-500 mb-1">Prepared By:</span>
-                <span class="font-semibold text-white">Avishkar Patil</span>
+            <div class="p-3 bg-brand-surface rounded-xl border border-brand-border/60">
+                <p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Analyst</p>
+                <p class="text-sm font-semibold text-gray-200">Avishkar Patil</p>
+                <p class="text-[10px] text-brand-orange mt-1">MMS Finance • Jun 2026</p>
             </div>
         </div>
 
-        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-            <button onclick="switchTab('overview')" id="btn-overview" class="nav-btn active w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 text-left">
-                <i class="fa-solid fa-chart-pie w-5 text-center"></i> Overview & Market
+        <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
+            <button onclick="switchTab('overview')" id="btn-overview" class="nav-btn active w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm text-gray-400">
+                <i class="fa-solid fa-earth-asia w-5 text-center"></i> Overview & Macro
             </button>
-            <button onclick="switchTab('food')" id="btn-food" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 text-left">
-                <i class="fa-solid fa-motorcycle w-5 text-center"></i> Food Delivery
+            <button onclick="switchTab('food')" id="btn-food" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm text-gray-400">
+                <i class="fa-solid fa-burger w-5 text-center"></i> Food Delivery KPIs
             </button>
-            <button onclick="switchTab('instamart')" id="btn-instamart" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 text-left">
-                <i class="fa-solid fa-bolt w-5 text-center"></i> Quick Commerce
+            <button onclick="switchTab('instamart')" id="btn-instamart" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm text-gray-400">
+                <i class="fa-solid fa-bolt w-5 text-center"></i> Instamart Metrics
             </button>
-            <button onclick="switchTab('quarterly')" id="btn-quarterly" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 text-left">
-                <i class="fa-solid fa-calendar-trend-up w-5 text-center"></i> Quarterly Trends
+            <button onclick="switchTab('financials')" id="btn-financials" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm text-gray-400">
+                <i class="fa-solid fa-file-invoice-dollar w-5 text-center"></i> Ratios & Quarterly
             </button>
-            <button onclick="switchTab('analysis')" id="btn-analysis" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-white/5 text-left">
-                <i class="fa-solid fa-chess-knight w-5 text-center"></i> Risks & Opportunities
+            <button onclick="switchTab('swot')" id="btn-swot" class="nav-btn w-full flex items-center gap-3 px-4 py-3.5 rounded-lg text-sm text-gray-400">
+                <i class="fa-solid fa-chess-knight w-5 text-center"></i> SWOT & Risks
             </button>
         </nav>
     </aside>
 
-    <main class="flex-1 overflow-y-auto bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-gray-800/20 via-[#0f1115] to-[#0f1115] p-8 relative">
-        
-        <div class="absolute top-0 right-0 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl pointer-events-none"></div>
+    <!-- Main Viewport -->
+    <main class="flex-1 overflow-y-auto bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-800/10 via-[#0a0c10] to-[#0a0c10] p-6 lg:p-10 relative">
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-brand-orange/5 rounded-full blur-[100px] pointer-events-none"></div>
 
-        <div id="tab-overview" class="tab-content active space-y-6">
-            <h2 class="text-2xl font-bold text-white mb-6">Company Overview & Industry Dynamics</h2>
+        <!-- TAB 1: OVERVIEW & MARKET DYNAMICS -->
+        <div id="tab-overview" class="tab-content active space-y-8 max-w-7xl mx-auto">
+            <header>
+                <h2 class="text-3xl font-bold text-white tracking-tight">Business & Macro Environment</h2>
+                <p class="text-gray-400 mt-2">Comprehensive ecosystem mapping and quick commerce industry trajectory.</p>
+            </header>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="md:col-span-2 glass-card p-6 rounded-2xl">
-                    <h3 class="text-lg font-semibold text-white mb-3 border-b border-gray-700/50 pb-2">Business Model</h3>
-                    <p class="text-sm text-gray-300 leading-relaxed mb-4">
-                        Swiggy Limited is a technology-enabled convenience platform allowing consumers to order food, groceries, and daily essentials through a single integrated application. It creates an interconnected network effect bridging consumers, restaurants/dark stores, and delivery partners.
-                    </p>
-                    <div class="grid grid-cols-2 gap-4 mt-4">
-                        <div class="bg-swiggy-dark/50 p-4 rounded-xl border border-gray-800">
-                            <span class="text-swiggy-orange text-xs font-bold uppercase tracking-wider block mb-1">Differentiator</span>
-                            <span class="text-sm font-medium text-white">Multi-Service Platform & Cross-Selling (30%+ users engage with multiple services)</span>
-                        </div>
-                        <div class="bg-swiggy-dark/50 p-4 rounded-xl border border-gray-800">
-                            <span class="text-swiggy-orange text-xs font-bold uppercase tracking-wider block mb-1">Scale</span>
-                            <span class="text-sm font-medium text-white">>500,000 Delivery Partners & ~240,000 Restaurant Partners</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-card p-6 rounded-2xl flex flex-col justify-center items-center">
-                    <h3 class="text-sm font-semibold text-gray-300 mb-2 uppercase tracking-wider text-center">Quick Commerce Market Share (India)</h3>
-                    <p class="text-[10px] text-gray-500 mb-4 text-center">Source: AllianceBernstein (Market value expected to reach $5.5B by 2025)</p>
-                    <div class="relative w-full aspect-square max-w-[200px]">
-                        <canvas id="marketShareChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-food" class="tab-content space-y-6">
-            <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                <i class="fa-solid fa-utensils text-swiggy-orange"></i> Food Delivery Segment
-            </h2>
-            
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="glass-card p-5 rounded-2xl relative overflow-hidden group">
-                    <div class="absolute right-0 top-0 w-16 h-16 bg-gradient-to-br from-green-500/20 to-transparent rounded-bl-full transition-transform group-hover:scale-110"></div>
-                    <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Gross Order Value (FY25)</span>
-                    <p class="text-2xl font-bold text-white mt-2">₹28,783 Cr</p>
-                    <span class="text-xs text-green-400 mt-1 block"><i class="fa-solid fa-arrow-up text-[10px]"></i> 16.4% YoY</span>
-                </div>
-                <div class="glass-card p-5 rounded-2xl relative overflow-hidden group">
-                    <div class="absolute right-0 top-0 w-16 h-16 bg-gradient-to-br from-swiggy-orange/20 to-transparent rounded-bl-full transition-transform group-hover:scale-110"></div>
-                    <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Contribution Margin</span>
-                    <p class="text-2xl font-bold text-white mt-2">7.1%</p>
-                    <span class="text-xs text-gray-400 mt-1 block">Improved from 1.6% in FY22</span>
-                </div>
-                <div class="glass-card p-5 rounded-2xl relative overflow-hidden group">
-                    <div class="absolute right-0 top-0 w-16 h-16 bg-gradient-to-br from-blue-500/20 to-transparent rounded-bl-full transition-transform group-hover:scale-110"></div>
-                    <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Adjusted EBITDA</span>
-                    <p class="text-2xl font-bold text-green-400 mt-2">2.0%</p>
-                    <span class="text-xs text-gray-400 mt-1 block">Definitively Profitable (vs -0.2% FY24)</span>
-                </div>
-                <div class="glass-card p-5 rounded-2xl relative overflow-hidden group">
-                    <div class="absolute right-0 top-0 w-16 h-16 bg-gradient-to-br from-purple-500/20 to-transparent rounded-bl-full transition-transform group-hover:scale-110"></div>
-                    <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Average Order Value</span>
-                    <p class="text-2xl font-bold text-white mt-2">₹458</p>
-                    <span class="text-xs text-gray-400 mt-1 block">Up from ₹428 in FY24</span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass-card p-6 rounded-2xl">
-                    <h3 class="text-sm font-semibold text-gray-300 mb-4">Orders & GOV Growth (FY22 - FY25)</h3>
-                    <div class="chart-container"><canvas id="foodGovChart"></canvas></div>
-                </div>
-                <div class="glass-card p-6 rounded-2xl flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-sm font-semibold text-swiggy-orange mb-3 border-b border-gray-700/50 pb-2">Segment Strategic Focus</h3>
-                        <ul class="text-sm text-gray-300 space-y-3">
-                            <li><strong class="text-white">Bolt (10-Min Delivery):</strong> Scaled across 500+ cities. Users show 4-6% higher monthly retention. Key driver of growth and engagement.</li>
-                            <li><strong class="text-white">Profitability Fuel:</strong> Fuelled by tighter operational levers and a scaling advertising business.</li>
-                            <li><strong class="text-white">Deeper Penetration:</strong> Focus shifted from wider to deeper. Outskirts of metros and Tier 2/3 towns are emerging as strongholds.</li>
-                        </ul>
-                    </div>
-                    <div class="mt-4 p-4 bg-swiggy-dark/80 rounded-xl border border-swiggy-border text-center">
-                        <span class="text-xs text-gray-400 block mb-1">FY25 Gross Revenue</span>
-                        <span class="text-xl font-bold text-white">₹7,265 Cr</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-instamart" class="tab-content space-y-6">
-            <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                <i class="fa-solid fa-bolt text-yellow-400"></i> Swiggy Instamart (Quick Commerce)
-            </h2>
-
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="glass-card p-5 rounded-2xl">
-                    <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Gross Order Value (FY25)</span>
-                    <p class="text-2xl font-bold text-white mt-2">₹14,683 Cr</p>
-                </div>
-                <div class="glass-card p-5 rounded-2xl">
-                    <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Total Orders (FY25)</span>
-                    <p class="text-2xl font-bold text-white mt-2">285.5 M</p>
-                </div>
-                <div class="glass-card p-5 rounded-2xl border-yellow-500/30">
-                    <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Active Dark Stores</span>
-                    <p class="text-2xl font-bold text-yellow-400 mt-2">1,021</p>
-                    <span class="text-xs text-gray-400 mt-1 block">Replacing smaller stores with 3.5k-4.5k sq ft formats</span>
-                </div>
-                <div class="glass-card p-5 rounded-2xl">
-                    <span class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Adjusted EBITDA</span>
-                    <p class="text-2xl font-bold text-red-400 mt-2">-14.3%</p>
-                    <span class="text-xs text-gray-400 mt-1 block">Improved from -53.7% in FY22</span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass-card p-6 rounded-2xl">
-                    <h3 class="text-sm font-semibold text-gray-300 mb-4">Instamart Unit Economics Matrix</h3>
-                    <div class="chart-container"><canvas id="instamartMarginChart"></canvas></div>
-                </div>
-                <div class="glass-card p-6 rounded-2xl">
-                    <h3 class="text-sm font-semibold text-swiggy-orange mb-3 border-b border-gray-700/50 pb-2">Infrastructure & Growth</h3>
-                    <p class="text-sm text-gray-300 leading-relaxed mb-4">
-                        While Food Delivery is the profitability engine, Instamart represents the largest growth opportunity. Rapid expansion has brought it to 124 cities.
-                    </p>
-                    <div class="space-y-3">
-                        <div class="p-3 bg-swiggy-dark/50 rounded-lg border border-swiggy-border border-l-4 border-l-yellow-400 hover:-translate-y-1 transition-transform cursor-default">
-                            <h4 class="text-xs font-bold text-white uppercase">Megapods Innovation</h4>
-                            <p class="text-[11px] text-gray-400 mt-1">44 next-gen hubs (10k-12k sq ft) accommodating 50,000+ SKUs. Accounts for 10% of dark store area, serving 20% of customer base.</p>
-                        </div>
-                        <div class="p-3 bg-swiggy-dark/50 rounded-lg border border-swiggy-border border-l-4 border-l-orange-400 hover:-translate-y-1 transition-transform cursor-default">
-                            <h4 class="text-xs font-bold text-white uppercase">Tier 2/3 Penetration</h4>
-                            <p class="text-[11px] text-gray-400 mt-1">1 in 4 new users acquired came from non-metro cities, highlighting rising demand beyond major metropolitan regions.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="tab-quarterly" class="tab-content space-y-6">
-            <h2 class="text-2xl font-bold text-white mb-6 flex items-center gap-3">
-                <i class="fa-solid fa-chart-line text-blue-400"></i> High-Frequency Quarterly Performance
-            </h2>
-
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="glass-card p-5 rounded-2xl">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase mb-4 text-center">Monthly Transacting Users (Mn)</h3>
-                    <div class="relative w-full h-[220px]"><canvas id="mtuChart"></canvas></div>
-                    <p class="text-[11px] text-center text-gray-500 mt-2">Latest Q2FY26 saw double-digit growth, highest in 2 years.</p>
+                <!-- Ecosystem Summary -->
+                <div class="lg:col-span-2 glass-card p-8">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-sitemap text-brand-orange"></i> Swiggy's Integrated Platform</h3>
+                    <p class="text-sm text-gray-300 leading-relaxed mb-4">
+                        Founded in 2014, Swiggy pioneered online food delivery in India and has evolved into a unified convenience platform[cite: 1]. The ecosystem creates profound structural network effects by seamlessly integrating multiple consumer needs—such as Food Delivery, Instamart (Quick Commerce), Dineout, and Bolt[cite: 1]. 
+                    </p>
+                    <div class="grid grid-cols-2 gap-4 mt-6">
+                        <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+                            <span class="text-brand-orange text-xs font-bold uppercase block mb-1">Cross-Selling Metric</span>
+                            <span class="text-white font-medium text-sm">Over 30% of users engage with multiple services across the platform[cite: 1].</span>
+                        </div>
+                        <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+                            <span class="text-brand-orange text-xs font-bold uppercase block mb-1">Logistics & Merchant Scale</span>
+                            <span class="text-white font-medium text-sm">>500,000 active delivery partners and ~240,000 restaurant/brand partners[cite: 1].</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="glass-card p-5 rounded-2xl">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase mb-4 text-center">Platform GOV (₹ Cr)</h3>
-                    <div class="relative w-full h-[220px]"><canvas id="quarterlyGovChart"></canvas></div>
-                </div>
-                <div class="glass-card p-5 rounded-2xl">
-                    <h3 class="text-xs font-bold text-gray-400 uppercase mb-4 text-center">Contribution Profit Margin (%)</h3>
-                    <div class="relative w-full h-[220px]"><canvas id="qMarginChart"></canvas></div>
-                    <p class="text-[11px] text-center text-gray-500 mt-2">Upward trend improving sustainably over time.</p>
-                </div>
-            </div>
 
-            <div class="glass-card p-6 rounded-2xl">
-                <h3 class="text-sm font-semibold text-gray-300 mb-4">Dark Store Network Expansion</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="text-xs text-gray-400 uppercase bg-swiggy-dark/80 border-b border-gray-700">
-                            <tr>
-                                <th class="px-4 py-3">Metric</th>
-                                <th class="px-4 py-3">Q2FY25</th>
-                                <th class="px-4 py-3">Q3FY25</th>
-                                <th class="px-4 py-3">Q4FY25</th>
-                                <th class="px-4 py-3">Q1FY26</th>
-                                <th class="px-4 py-3 text-swiggy-orange">Q2FY26</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-800 text-gray-300">
-                            <tr class="hover:bg-white/5 transition-colors">
-                                <td class="px-4 py-3 font-medium text-white">Active Dark Stores</td>
-                                <td class="px-4 py-3">609</td>
-                                <td class="px-4 py-3">705</td>
-                                <td class="px-4 py-3">1,021</td>
-                                <td class="px-4 py-3">1,062</td>
-                                <td class="px-4 py-3 font-bold text-white">1,102</td>
-                            </tr>
-                            <tr class="hover:bg-white/5 transition-colors">
-                                <td class="px-4 py-3 font-medium text-white">Cities Covered</td>
-                                <td class="px-4 py-3">44</td>
-                                <td class="px-4 py-3">67</td>
-                                <td class="px-4 py-3">124</td>
-                                <td class="px-4 py-3">127</td>
-                                <td class="px-4 py-3 font-bold text-white">128</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- Macro Market Insights -->
+                <div class="glass-card p-8 bg-gradient-to-br from-brand-surface to-brand-surface/30">
+                    <h3 class="text-lg font-bold text-white mb-4">Quick Commerce Market Size (India)</h3>
+                    <div class="chart-container-sm mb-4"><canvas id="macroMarketChart"></canvas></div>
+                    <ul class="text-xs text-gray-300 space-y-3">
+                        <li class="flex gap-2"><i class="fa-solid fa-arrow-trend-up text-green-400 mt-0.5"></i> <span>The India Q-commerce market is valued at approximately $6.78 Billion in 2025.</span></li>
+                        <li class="flex gap-2"><i class="fa-solid fa-rocket text-blue-400 mt-0.5"></i> <span>Forecasted to reach $12.97 Billion by 2029 at a 17.6% CAGR.</span></li>
+                        <li class="flex gap-2"><i class="fa-solid fa-boxes-stacked text-purple-400 mt-0.5"></i> <span>Growth is accelerating through expansion into Tier-2/3 cities and new product verticals.</span></li>
+                    </ul>
                 </div>
             </div>
         </div>
 
-        <div id="tab-analysis" class="tab-content space-y-6">
-            <h2 class="text-2xl font-bold text-white mb-6">Strategic SWOT & Future Outlook</h2>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass-card p-6 rounded-2xl border-t-4 border-t-green-500">
-                    <h3 class="text-lg font-bold text-green-400 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-shield-check"></i> Strengths & Opportunities (Why Swiggy Can Win)
-                    </h3>
-                    <ul class="space-y-4">
-                        <li class="bg-swiggy-dark/40 p-3 rounded-lg border border-gray-800 hover:border-green-500/30 transition-colors">
-                            <h4 class="text-sm font-bold text-white mb-1">Multi-Service Ecosystem & Cross-Selling</h4>
-                            <p class="text-xs text-gray-400">Integrated platform allows converting Food Delivery users to Instamart/Dineout. High stickiness.</p>
-                        </li>
-                        <li class="bg-swiggy-dark/40 p-3 rounded-lg border border-gray-800 hover:border-green-500/30 transition-colors">
-                            <h4 class="text-sm font-bold text-white mb-1">Profitable Food Delivery Engine</h4>
-                            <p class="text-xs text-gray-400">Generates cash flows supporting expansion in Quick Commerce and Out-of-Home Consumption.</p>
-                        </li>
-                        <li class="bg-swiggy-dark/40 p-3 rounded-lg border border-gray-800 hover:border-green-500/30 transition-colors">
-                            <h4 class="text-sm font-bold text-white mb-1">New Categories & Tier 2/3 Expansion</h4>
-                            <p class="text-xs text-gray-400">15-20% of orders are non-grocery (electronics, fashion). Expanding beyond the 124 current cities using existing food delivery network (718 cities).</p>
-                        </li>
-                        <li class="bg-swiggy-dark/40 p-3 rounded-lg border border-gray-800 hover:border-green-500/30 transition-colors">
-                            <h4 class="text-sm font-bold text-white mb-1">Platform Advertising Revenues</h4>
-                            <p class="text-xs text-gray-400">High margin, scalable business without significant operational costs. Accelerates profitability.</p>
-                        </li>
-                    </ul>
-                </div>
-
-                <div class="glass-card p-6 rounded-2xl border-t-4 border-t-red-500">
-                    <h3 class="text-lg font-bold text-red-400 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-triangle-exclamation"></i> Risks & Challenges (Why Swiggy Can Lose)
-                    </h3>
-                    <ul class="space-y-4">
-                        <li class="bg-swiggy-dark/40 p-3 rounded-lg border border-gray-800 hover:border-red-500/30 transition-colors">
-                            <h4 class="text-sm font-bold text-white mb-1">Intense Competition</h4>
-                            <p class="text-xs text-gray-400">Cut-throat battle with Zomato/Blinkit and Zepto. High requirement for discounts, faster deliveries, and rapid dark store expansion.</p>
-                        </li>
-                        <li class="bg-swiggy-dark/40 p-3 rounded-lg border border-gray-800 hover:border-red-500/30 transition-colors">
-                            <h4 class="text-sm font-bold text-white mb-1">Quick Commerce Profitability (Margin Pressure)</h4>
-                            <p class="text-xs text-gray-400">Low-margin business (8-10%). High capital requirement and capital-intensive infrastructure expansion keeps it away from absolute profitability.</p>
-                        </li>
-                        <li class="bg-swiggy-dark/40 p-3 rounded-lg border border-gray-800 hover:border-red-500/30 transition-colors">
-                            <h4 class="text-sm font-bold text-white mb-1">Execution & Consumer Shift Risks</h4>
-                            <p class="text-xs text-gray-400">Price-sensitive Indian consumers might shift to supermarket chains like DMart. Inventory management at scale remains a critical challenge.</p>
-                        </li>
-                        <li class="bg-swiggy-dark/40 p-3 rounded-lg border border-gray-800 hover:border-red-500/30 transition-colors">
-                            <h4 class="text-sm font-bold text-white mb-1">Regulatory & Compliance Risks</h4>
-                            <p class="text-xs text-gray-400">Changes in gig worker policies or taxation can directly affect supply, delivery times, and core competitive metrics.</p>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+        <!-- TAB 2: FOOD DELIVERY KPIs -->
+        <div id="tab-food" class="tab-content space-y-8 max-w-7xl mx-auto">
+            <header>
+                <h2 class="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <i class="fa-solid fa-burger text-brand-orange"></i> Food Delivery Operations
+                </h2>
+            </header>
             
-            <div class="mt-6 glass-card p-4 rounded-xl text-center border-swiggy-orange/50">
-                <p class="text-sm text-gray-300 italic">"Swiggy's future growth is likely to be driven by the continued expansion of quick commerce business, higher advertising revenues, cross-selling on platforms and penetration into Tier 2 and Tier 3 cities, and improving profitability through scale."</p>
+            <!-- Topline Stats Grid -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-card p-6 border-t-4 border-t-green-500 hover:border-t-green-400">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Gross Order Value (FY25)</p>
+                    <p class="text-3xl font-bold text-white mt-2 mb-1">₹28,783 <span class="text-sm font-normal text-gray-400">Cr</span></p>
+                    <p class="text-xs text-green-400"><i class="fa-solid fa-arrow-up"></i> 16.4% YoY Expansion[cite: 1]</p>
+                </div>
+                <div class="glass-card p-6 border-t-4 border-t-blue-500 hover:border-t-blue-400">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Delivery Volume</p>
+                    <p class="text-3xl font-bold text-white mt-2 mb-1">628.9 <span class="text-sm font-normal text-gray-400">Mn</span></p>
+                    <p class="text-xs text-gray-400">Up from 454.1 Mn in FY22[cite: 1]</p>
+                </div>
+                <div class="glass-card p-6 border-t-4 border-t-brand-orange hover:border-t-orange-400">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Contribution Margin</p>
+                    <p class="text-3xl font-bold text-white mt-2 mb-1">7.1%</p>
+                    <p class="text-xs text-gray-400">Massive improvement from 1.6% in FY22[cite: 1]</p>
+                </div>
+                <div class="glass-card p-6 border-t-4 border-t-purple-500 hover:border-t-purple-400">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Adjusted EBITDA Margin</p>
+                    <p class="text-3xl font-bold text-green-400 mt-2 mb-1">+2.0%</p>
+                    <p class="text-xs text-gray-400">Definitively Profitable Segment[cite: 1]</p>
+                </div>
+            </div>
+
+            <!-- Complex Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="glass-card p-8">
+                    <h3 class="text-sm font-bold text-white mb-6 uppercase tracking-widest">Order Volume & Value Trajectory</h3>
+                    <div class="chart-container"><canvas id="foodScaleChart"></canvas></div>
+                </div>
+                <div class="glass-card p-8 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-sm font-bold text-white mb-4 uppercase tracking-widest">Operational Levers & Innovation</h3>
+                        <div class="space-y-4">
+                            <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+                                <h4 class="text-sm font-bold text-brand-orange mb-1">Bolt (10-Minute Delivery)</h4>
+                                <p class="text-xs text-gray-300">Scaled across over 500 cities. Users utilizing Bolt display 4% to 6% higher monthly retention rates than platform averages[cite: 1].</p>
+                            </div>
+                            <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+                                <h4 class="text-sm font-bold text-brand-orange mb-1">Consumer Economics</h4>
+                                <p class="text-xs text-gray-300">Average Order Value (AOV) has scaled steadily from ₹407 (FY22) to ₹458 (FY25)[cite: 1], aiding profitability metrics.</p>
+                            </div>
+                            <div class="bg-black/30 p-4 rounded-xl border border-white/5">
+                                <h4 class="text-sm font-bold text-brand-orange mb-1">Transacting Users</h4>
+                                <p class="text-xs text-gray-300">Average Monthly Transacting Users (MTU) grew from 9.9 million in FY22 to 14.7 million in FY25[cite: 1].</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
+        <!-- TAB 3: INSTAMART KPIs -->
+        <div id="tab-instamart" class="tab-content space-y-8 max-w-7xl mx-auto">
+            <header>
+                <h2 class="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <i class="fa-solid fa-bolt text-yellow-400"></i> Swiggy Instamart (Quick Commerce)
+                </h2>
+            </header>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-card p-6">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Gross Order Value (FY25)</p>
+                    <p class="text-3xl font-bold text-white mt-2 mb-1">₹14,683 <span class="text-sm text-gray-400">Cr</span></p>
+                    <p class="text-xs text-green-400"><i class="fa-solid fa-rocket"></i> Hyper-scaling phase[cite: 1]</p>
+                </div>
+                <div class="glass-card p-6">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Orders</p>
+                    <p class="text-3xl font-bold text-white mt-2 mb-1">285.5 <span class="text-sm text-gray-400">Mn</span></p>
+                    <p class="text-xs text-gray-400">Massive jump from 41.7 Mn in FY22[cite: 1]</p>
+                </div>
+                <div class="glass-card p-6">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Dark Stores</p>
+                    <p class="text-3xl font-bold text-yellow-400 mt-2 mb-1">1,021</p>
+                    <p class="text-xs text-gray-400">Expanding to Megapods formats[cite: 1]</p>
+                </div>
+                <div class="glass-card p-6">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Average Order Value</p>
+                    <p class="text-3xl font-bold text-white mt-2 mb-1">₹514</p>
+                    <p class="text-xs text-gray-400">Up from ₹394 in FY22[cite: 1]</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="glass-card p-8">
+                    <h3 class="text-sm font-bold text-white mb-6 uppercase tracking-widest">Instamart Unit Economics Pathway</h3>
+                    <div class="chart-container"><canvas id="instamartEconomicsChart"></canvas></div>
+                </div>
+                <div class="glass-card p-8">
+                    <h3 class="text-sm font-bold text-white mb-6 uppercase tracking-widest">Infrastructure & Regional Strategy</h3>
+                    <ul class="text-sm text-gray-300 space-y-4">
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-warehouse text-yellow-400 mt-1"></i>
+                            <div>
+                                <strong class="text-white block">Megapods Integration</strong>
+                                Deployment of 44 next-gen hubs (10k-12k sq ft) managing over 50,000 SKUs[cite: 1]. They account for 10% of total dark store area while serving 20% of the customer base[cite: 1].
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-map-location-dot text-brand-orange mt-1"></i>
+                            <div>
+                                <strong class="text-white block">Tier-2/Tier-3 Penetration</strong>
+                                Operations extended to 124 cities[cite: 1]. Notably, 1 in 4 new users acquired came from non-metro areas, underscoring rising digital adoption outside metropolitan capitals[cite: 1].
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-chart-pie text-blue-400 mt-1"></i>
+                            <div>
+                                <strong class="text-white block">Market Share Positioning</strong>
+                                In the broader Indian Quick Commerce landscape, Blinkit controls >50% market share, with Swiggy Instamart and Zepto actively vying for scale and dominance.
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: FINANCIAL RATIOS & QUARTERLY -->
+        <div id="tab-financials" class="tab-content space-y-8 max-w-7xl mx-auto">
+            <header>
+                <h2 class="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <i class="fa-solid fa-file-invoice-dollar text-green-400"></i> Financial Stability & High-Frequency Data
+                </h2>
+            </header>
+
+            <!-- Financial Ratios Panel -->
+            <div class="glass-card p-8">
+                <h3 class="text-sm font-bold text-white mb-6 uppercase tracking-widest border-b border-white/10 pb-3">Key Corporate Financial Ratios (FY25)</h3>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-6 text-center">
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <p class="text-xs text-gray-500 uppercase font-bold mb-1">Current Ratio</p>
+                        <p class="text-2xl font-bold text-white">2.54x</p>
+                    </div>
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <p class="text-xs text-gray-500 uppercase font-bold mb-1">Quick Ratio</p>
+                        <p class="text-2xl font-bold text-white">2.52x</p>
+                    </div>
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <p class="text-xs text-gray-500 uppercase font-bold mb-1">Asset Turnover</p>
+                        <p class="text-2xl font-bold text-white">1.20x</p>
+                    </div>
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <p class="text-xs text-gray-500 uppercase font-bold mb-1">ROCE</p>
+                        <p class="text-2xl font-bold text-red-400">-33.05%</p>
+                    </div>
+                    <div class="bg-black/20 p-4 rounded-xl">
+                        <p class="text-xs text-gray-500 uppercase font-bold mb-1">EPS (FY25)</p>
+                        <p class="text-2xl font-bold text-red-400">-13.63</p>
+                    </div>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-4 text-center">Source: Corporate Filings & Smart-Investing Platform Analysis</p>
+            </div>
+
+            <!-- Quarterly Trends -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="glass-card p-6">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest text-center mb-4">Platform MTU (Millions)</h3>
+                    <div class="chart-container-sm"><canvas id="qMtuChart"></canvas></div>
+                    <p class="text-xs text-center text-gray-500 mt-3">Q2FY26 achieved double-digit growth, the highest in two years[cite: 1].</p>
+                </div>
+                <div class="glass-card p-6">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest text-center mb-4">Gross Order Value (₹ Cr)</h3>
+                    <div class="chart-container-sm"><canvas id="qGovChart"></canvas></div>
+                </div>
+                <div class="glass-card p-6">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest text-center mb-4">Contribution Margin (%)</h3>
+                    <div class="chart-container-sm"><canvas id="qMarginChart"></canvas></div>
+                    <p class="text-xs text-center text-gray-500 mt-3">Sustained sequential improvement in operational profitability[cite: 1].</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: SWOT & OUTLOOK -->
+        <div id="tab-swot" class="tab-content space-y-8 max-w-7xl mx-auto">
+            <header>
+                <h2 class="text-3xl font-bold text-white tracking-tight">Strategic SWOT Profile</h2>
+                <p class="text-gray-400 mt-2">Analyst assessment of platform positioning and systemic risks.</p>
+            </header>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Strengths -->
+                <div class="glass-card p-8 border-t-4 border-t-green-500">
+                    <h3 class="text-xl font-bold text-green-400 mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved"></i> Key Strengths & Opportunities
+                    </h3>
+                    <ul class="space-y-4 text-sm text-gray-300">
+                        <li class="p-4 bg-black/20 rounded-xl border border-white/5 hover:border-green-500/30 transition-colors">
+                            <strong class="text-white block mb-1">Ecosystem Stickiness & Cross-Selling</strong>
+                            The multi-service platform enables robust customer retention, successfully converting established food delivery users directly into Instamart buyers[cite: 1].
+                        </li>
+                        <li class="p-4 bg-black/20 rounded-xl border border-white/5 hover:border-green-500/30 transition-colors">
+                            <strong class="text-white block mb-1">Category & Regional Expansion</strong>
+                            15% to 20% of orders now consist of non-grocery items like electronics and fashion[cite: 1]. Expansion into Tier-2 and 3 cities provides massive untapped growth reserves[cite: 1].
+                        </li>
+                        <li class="p-4 bg-black/20 rounded-xl border border-white/5 hover:border-green-500/30 transition-colors">
+                            <strong class="text-white block mb-1">High-Margin Ad Revenues</strong>
+                            In-app advertising yields scalable, operational-light revenue streams acting as a key profitability driver for merchant visibility[cite: 1].
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Risks -->
+                <div class="glass-card p-8 border-t-4 border-t-red-500">
+                    <h3 class="text-xl font-bold text-red-400 mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Challenges & Downside Risks
+                    </h3>
+                    <ul class="space-y-4 text-sm text-gray-300">
+                        <li class="p-4 bg-black/20 rounded-xl border border-white/5 hover:border-red-500/30 transition-colors">
+                            <strong class="text-white block mb-1">Hyper-Competitive Environment</strong>
+                            Extreme competitive intensity against capitalized peers (Zomato/Blinkit and Zepto) necessitates heavy discounting, fast dark store rollouts, and aggressive customer acquisition costs[cite: 1].
+                        </li>
+                        <li class="p-4 bg-black/20 rounded-xl border border-white/5 hover:border-red-500/30 transition-colors">
+                            <strong class="text-white block mb-1">Capital-Intensive Infrastructure</strong>
+                            Quick commerce operates on thin margins (8-10%)[cite: 1]. Scaling physical dark store footprints inherently limits near-term absolute profitability[cite: 1].
+                        </li>
+                        <li class="p-4 bg-black/20 rounded-xl border border-white/5 hover:border-red-500/30 transition-colors">
+                            <strong class="text-white block mb-1">Regulatory & Gig Worker Risks</strong>
+                            Any sudden governmental changes regarding taxation policies or labor protections for gig workers could severely disrupt the core logistics supply chain[cite: 1].
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </main>
 
+    <!-- UI Logic & Chart Configurations -->
     <script>
-        // Tab Switching Logic
+        // Smooth Tab Switching Matrix
         function switchTab(tabId) {
-            // Reset Buttons
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-            // Reset Content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            // Activate target
             document.getElementById('btn-' + tabId).classList.add('active');
             document.getElementById('tab-' + tabId).classList.add('active');
         }
 
-        // Global Chart Defaults for Premium Dark Theme
-        Chart.defaults.color = '#9ca3af';
-        Chart.defaults.font.family = 'Inter, sans-serif';
-        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(23, 26, 33, 0.95)';
+        // Universal Chart.js Theming
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.font.family = '"Plus Jakarta Sans", sans-serif';
+        Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(10, 12, 16, 0.9)';
         Chart.defaults.plugins.tooltip.titleColor = '#fff';
-        Chart.defaults.plugins.tooltip.bodyColor = '#cbd5e1';
-        Chart.defaults.plugins.tooltip.borderColor = 'rgba(252, 128, 25, 0.3)';
+        Chart.defaults.plugins.tooltip.bodyColor = '#e2e8f0';
+        Chart.defaults.plugins.tooltip.borderColor = 'rgba(252, 128, 25, 0.4)';
         Chart.defaults.plugins.tooltip.borderWidth = 1;
         Chart.defaults.plugins.tooltip.padding = 12;
         Chart.defaults.plugins.tooltip.cornerRadius = 8;
-        Chart.defaults.plugins.tooltip.displayColors = true;
-        Chart.defaults.plugins.tooltip.boxPadding = 6;
-        Chart.defaults.elements.point.hoverRadius = 7;
-        Chart.defaults.elements.point.hoverBorderWidth = 3;
+        Chart.defaults.elements.point.hoverRadius = 6;
+        const gridOptions = { color: 'rgba(255,255,255,0.03)' };
 
-        // 1. Market Share Donut Chart
-        new Chart(document.getElementById('marketShareChart').getContext('2d'), {
-            type: 'doughnut',
+        // 1. Macro Market Projection (Bar)
+        new Chart(document.getElementById('macroMarketChart').getContext('2d'), {
+            type: 'bar',
             data: {
-                labels: ['Blinkit', 'Swiggy Instamart', 'Zepto', 'Others'],
+                labels: ['2024 (Est)', '2025', '2029 (Proj)'],
                 datasets: [{
-                    data: [39, 37, 20, 4],
-                    backgroundColor: ['#eab308', '#FC8019', '#a855f7', '#4b5563'],
-                    borderWidth: 0,
-                    hoverOffset: 8
+                    label: 'Market Size (Billion USD)',
+                    data: [5.48, 6.78, 12.97],
+                    backgroundColor: ['#4b5563', '#FC8019', '#10b981'],
+                    borderRadius: 6
                 }]
             },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: {
-                    legend: { display: false } // Hidden for cleaner UI, defined in labels via tooltips
-                }
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { grid: gridOptions } }
             }
         });
 
-        // 2. Food Delivery GOV vs Orders
-        new Chart(document.getElementById('foodGovChart').getContext('2d'), {
+        // 2. Food Delivery Scale (Combo)
+        new Chart(document.getElementById('foodScaleChart').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: ['FY22', 'FY23', 'FY24', 'FY25'],
@@ -469,16 +473,13 @@
                         yAxisID: 'y'
                     },
                     {
-                        label: 'GOV (₹ Cr)',
+                        label: 'Gross Order Value (₹ Cr)',
                         data: [18479, 21517, 24717, 28783],
                         type: 'line',
                         borderColor: '#10b981',
-                        backgroundColor: '#10b981',
                         borderWidth: 3,
                         tension: 0.3,
-                        pointBackgroundColor: '#171a21',
-                        pointBorderColor: '#10b981',
-                        pointBorderWidth: 2,
+                        pointBackgroundColor: '#0a0c10',
                         yAxisID: 'y1'
                     }
                 ]
@@ -487,14 +488,14 @@
                 responsive: true, maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
                 scales: {
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, title: {display: true, text: 'Orders (Mn)'} },
-                    y1: { position: 'right', grid: { drawOnChartArea: false }, title: {display: true, text: 'GOV (₹ Cr)'} }
+                    y: { grid: gridOptions },
+                    y1: { position: 'right', grid: { drawOnChartArea: false } }
                 }
             }
         });
 
-        // 3. Instamart Margins
-        new Chart(document.getElementById('instamartMarginChart').getContext('2d'), {
+        // 3. Instamart Unit Economics (Line)
+        new Chart(document.getElementById('instamartEconomicsChart').getContext('2d'), {
             type: 'line',
             data: {
                 labels: ['FY22', 'FY23', 'FY24', 'FY25'],
@@ -506,8 +507,7 @@
                         backgroundColor: 'rgba(244, 63, 94, 0.1)',
                         fill: true,
                         tension: 0.4,
-                        borderWidth: 3,
-                        pointBackgroundColor: '#171a21', pointBorderColor: '#f43f5e'
+                        pointBackgroundColor: '#0a0c10'
                     },
                     {
                         label: 'Adjusted EBITDA (%)',
@@ -515,42 +515,41 @@
                         borderColor: '#94a3b8',
                         borderDash: [5, 5],
                         tension: 0.4,
-                        pointBackgroundColor: '#171a21', pointBorderColor: '#94a3b8'
+                        pointBackgroundColor: '#0a0c10'
                     }
                 ]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
                 interaction: { mode: 'index', intersect: false },
-                scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' } } }
+                scales: { y: { grid: gridOptions } }
             }
         });
 
-        // 4. Quarterly MTU
-        new Chart(document.getElementById('mtuChart').getContext('2d'), {
+        // 4. Quarterly MTU (Line)
+        new Chart(document.getElementById('qMtuChart').getContext('2d'), {
             type: 'line',
             data: {
                 labels: ['Q2FY25', 'Q3FY25', 'Q4FY25', 'Q1FY26', 'Q2FY26'],
                 datasets: [{
-                    label: 'MTU (Millions)',
+                    label: 'Users (Mn)',
                     data: [14.7, 14.9, 15.1, 16.3, 17.2],
-                    borderColor: '#60a5fa',
-                    backgroundColor: 'rgba(96, 165, 250, 0.2)',
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
                     fill: true,
                     tension: 0.4,
-                    borderWidth: 3,
-                    pointBackgroundColor: '#171a21', pointBorderColor: '#60a5fa', pointRadius: 5
+                    pointBackgroundColor: '#0a0c10'
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' } } }
+                scales: { y: { grid: gridOptions } }
             }
         });
 
-        // 5. Quarterly GOV
-        new Chart(document.getElementById('quarterlyGovChart').getContext('2d'), {
+        // 5. Quarterly GOV (Bar)
+        new Chart(document.getElementById('qGovChart').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: ['Q2FY25', 'Q3FY25', 'Q4FY25', 'Q1FY26', 'Q2FY26'],
@@ -558,40 +557,32 @@
                     label: 'GOV (₹ Cr)',
                     data: [7191, 7436, 7347, 8086, 8542],
                     backgroundColor: 'rgba(252, 128, 25, 0.8)',
-                    borderRadius: 6,
-                    hoverBackgroundColor: '#FC8019'
+                    borderRadius: 4
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { y: { grid: { color: 'rgba(255,255,255,0.05)' } } }
+                scales: { y: { grid: gridOptions } }
             }
         });
 
-        // 6. Quarterly Contribution Profit Margin (%)
+        // 6. Quarterly Contribution Margin (Bar)
         new Chart(document.getElementById('qMarginChart').getContext('2d'), {
             type: 'bar',
             data: {
                 labels: ['Q2FY25', 'Q3FY25', 'Q4FY25', 'Q1FY26', 'Q2FY26'],
                 datasets: [{
-                    label: 'Margin % of GOV',
+                    label: 'Margin (%)',
                     data: [-1.9, -4.6, -5.6, -4.6, -2.6],
-                    backgroundColor: 'rgba(244, 63, 94, 0.7)',
-                    borderRadius: {topLeft: 0, topRight: 0, bottomLeft: 6, bottomRight: 6},
-                    hoverBackgroundColor: '#f43f5e'
+                    backgroundColor: 'rgba(16, 185, 129, 0.7)',
+                    borderRadius: {topLeft: 0, topRight: 0, bottomLeft: 4, bottomRight: 4}
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { 
-                    y: { 
-                        grid: { color: 'rgba(255,255,255,0.05)' },
-                        // Invert the axis visually for negative values pointing down organically
-                        max: 0 
-                    } 
-                }
+                scales: { y: { max: 0, grid: gridOptions } }
             }
         });
     </script>
